@@ -26,16 +26,23 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/binary"
+	"encoding/hex"
+	"regexp"
 	"hash"
 	"net"
 	"os"
 	"sync"
 	"time"
+	//"fmt"
 )
 
 // Difference in 100-nanosecond intervals between
 // UUID epoch (October 15, 1582) and Unix epoch (January 1, 1970).
 const epochStart = 122192928000000000
+
+const hexPattern = "[a-f0-9]{8}"
+
+var re = regexp.MustCompile(hexPattern)
 
 var (
 	global = newDefaultGenerator()
@@ -45,8 +52,8 @@ var (
 	posixGID  = uint32(os.Getgid())
 )
 
-func NewIncUUID() UUID {
-	return global.NewIncUUID()
+func NewIncUUID(name string) UUID {
+	return global.NewIncUUID(name)
 }
 
 // NewV1 returns UUID based on current timestamp and MAC address.
@@ -76,7 +83,7 @@ func NewV5(ns UUID, name string) UUID {
 
 // Generator provides interface for generating UUIDs.
 type Generator interface {
-	NewIncUUID() UUID
+	NewIncUUID(name string) UUID
 	NewV1() UUID
 	NewV2(domain byte) UUID
 	NewV3(ns UUID, name string) UUID
@@ -99,11 +106,31 @@ func newDefaultGenerator() Generator {
 }
 
 // 新生一个单调递增的 UUID
-func (g *generator) NewIncUUID() UUID {
+func (g *generator) NewIncUUID(name string) UUID {
 	u := UUID{}
+	
+	if (len(name)>0 && (len(name) != 8)) {
+		panic("UUID length != 8")
+		return u
+	}
+	
  
 	timeNow, clockSeq, hardwareAddr := g.getStorage()
- 
+	
+	//有name且长度为8时，用name替换
+	if (len(name)>0 && (len(name) == 8)) {
+		md := re.FindStringSubmatch(name)
+		if md == nil {
+			panic("Invalid UUID string")
+			return u
+		}
+		byteName, _ := hex.DecodeString(name)
+		//fmt.Printf("----byteName----- %v\n", byteName)
+		var tmpArr [6]byte
+		copy(tmpArr[2:], byteName)
+		//fmt.Printf("----tmpArr----- %v\n", tmpArr)
+		copy(hardwareAddr[:], tmpArr[:])
+	}
 	// 时间戳高位
 	u[0] = byte(uint16(timeNow >> 48))
 	// 时间戳中位
