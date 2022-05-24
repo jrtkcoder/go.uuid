@@ -40,7 +40,7 @@ import (
 // UUID epoch (October 15, 1582) and Unix epoch (January 1, 1970).
 const epochStart = 122192928000000000
 
-const hexPattern = "[a-f0-9]{8}"
+const hexPattern = "[A-Fa-f0-9]{8}"
 
 var re = regexp.MustCompile(hexPattern)
 
