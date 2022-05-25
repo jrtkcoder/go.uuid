@@ -108,12 +108,12 @@ func newDefaultGenerator() Generator {
 // 新生一个单调递增的 UUID
 func (g *generator) NewIncUUID(name string) UUID {
 	u := UUID{}
-	
+	/*
 	if (len(name)>0 && (len(name) != 8)) {
 		panic("UUID length != 8")
 		return u
 	}
-	
+	*/
  
 	timeNow, clockSeq, hardwareAddr := g.getStorage()
 	
